@@ -44,6 +44,122 @@ function calculateMET(speedKmh) {
   return MET_TABLE[MET_TABLE.length - 1].met;
 }
 
+// ── Motivational messages ────────────────────────────────────
+const MOTIVATIONAL_MESSAGES = {
+  low: [  // < 100 kcal
+    '¡Todo paso cuenta! Sigue moviéndote 💪',
+    '¡Buen comienzo! La constancia es la clave 🔑',
+    '¡Cada kilómetro te hace más fuerte! 🚶',
+    'Los pequeños esfuerzos crean grandes cambios ✨',
+  ],
+  medium: [  // 100–300 kcal
+    '¡Gran trabajo! Estás en racha 🔥',
+    '¡Eso es dedicación! Sigue así 💥',
+    '¡Tu cuerpo te lo agradece! 🏆',
+    '¡Impresionante esfuerzo! No pares 🚀',
+  ],
+  high: [  // 300–600 kcal
+    '¡Máquina! Eso ha sido brutal 🏅',
+    '¡Estás en otro nivel! Tremendo 💎',
+    '¡Sesión épica! Eres imparable 🦾',
+    '¡Atleta nato! Qué monstruo 🐺',
+  ],
+  extreme: [  // > 600 kcal
+    '¡BESTIA ABSOLUTA! Has destruido esa sesión 🔥🔥🔥',
+    '¡Nivel dios! ¿Quién te para? ⚡',
+    '¡Eso no es humano! Eres una leyenda 👑',
+    '¡Infernal! Has quemado hasta el asfalto 🌋',
+  ],
+};
+
+function getMotivationalMessage(calories) {
+  let tier;
+  if (calories < 100) tier = 'low';
+  else if (calories < 300) tier = 'medium';
+  else if (calories < 600) tier = 'high';
+  else tier = 'extreme';
+  const msgs = MOTIVATIONAL_MESSAGES[tier];
+  return msgs[Math.floor(Math.random() * msgs.length)];
+}
+
+// ── Food equivalences (kcal per unit) ────────────────────────
+const FOOD_EQUIVALENCES = [
+  { emoji: '🍕', name: 'porciones de pizza', kcal: 270 },
+  { emoji: '🍫', name: 'barritas de chocolate', kcal: 230 },
+  { emoji: '🍩', name: 'donuts', kcal: 250 },
+  { emoji: '🍌', name: 'plátanos', kcal: 105 },
+  { emoji: '🥤', name: 'latas de Coca-Cola', kcal: 140 },
+  { emoji: '🍺', name: 'cervezas', kcal: 150 },
+  { emoji: '🍪', name: 'galletas', kcal: 75 },
+  { emoji: '🥑', name: 'aguacates', kcal: 240 },
+  { emoji: '🌮', name: 'tacos', kcal: 210 },
+  { emoji: '🍦', name: 'bolas de helado', kcal: 200 },
+];
+
+function getFoodEquivalence(calories) {
+  const food = FOOD_EQUIVALENCES[Math.floor(Math.random() * FOOD_EQUIVALENCES.length)];
+  const amount = (calories / food.kcal).toFixed(1);
+  return `<span class="eq-emoji">${food.emoji}</span> Equivale a <span class="eq-value">${amount}</span> ${food.name}`;
+}
+
+// ── Theme management ─────────────────────────────────────────
+function getPreferredTheme() {
+  const saved = localStorage.getItem('embr_theme');
+  if (saved) return saved;
+  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark';
+}
+
+function applyTheme(theme) {
+  document.documentElement.setAttribute('data-theme', theme);
+  localStorage.setItem('embr_theme', theme);
+}
+
+applyTheme(getPreferredTheme());
+
+// ── History management ───────────────────────────────────────
+const MAX_HISTORY = 5;
+
+function loadHistory() {
+  try {
+    return JSON.parse(localStorage.getItem('embr_history') || '[]');
+  } catch { return []; }
+}
+
+function saveToHistory(entry) {
+  const history = loadHistory();
+  history.unshift(entry);
+  if (history.length > MAX_HISTORY) history.length = MAX_HISTORY;
+  localStorage.setItem('embr_history', JSON.stringify(history));
+  renderHistory();
+}
+
+function clearHistory() {
+  localStorage.removeItem('embr_history');
+  renderHistory();
+}
+
+function renderHistory() {
+  const list = document.querySelector('#history-list');
+  const section = document.querySelector('#history-section');
+  const history = loadHistory();
+
+  if (history.length === 0) {
+    section.classList.add('hidden');
+    return;
+  }
+
+  section.classList.remove('hidden');
+  list.innerHTML = history.map((h, i) => `
+    <div class="history-item" style="animation-delay: ${i * 0.05}s">
+      <div class="history-item-left">
+        <span class="history-item-cal">${h.calories} kcal</span>
+        <span class="history-item-info">${h.distance} km · ${h.time} min · ${h.speed} km/h · ${h.activity}</span>
+      </div>
+      <span class="history-item-date">${h.date}</span>
+    </div>
+  `).join('');
+}
+
 // ── DOM Elements ─────────────────────────────────────────────
 const $ = (sel) => document.querySelector(sel);
 
@@ -59,6 +175,22 @@ const btnMinutes = $('#btn-minutes');
 const btnHhmm = $('#btn-hhmm');
 const calculateBtn = $('#calculate');
 const resultsSection = $('#results-section');
+
+const themeToggle = $('#theme-toggle');
+const historySection = $('#history-section');
+const clearHistoryBtn = $('#clear-history');
+
+// ── Theme Toggle ──────────────────────────────────────────────
+themeToggle.addEventListener('click', () => {
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current === 'light' ? 'dark' : 'light');
+});
+
+// ── History: Clear ────────────────────────────────────────────
+clearHistoryBtn.addEventListener('click', clearHistory);
+
+// ── History: Initial render ───────────────────────────────────
+renderHistory();
 
 // ── Time Mode Toggle ─────────────────────────────────────────
 let timeMode = 'minutes';
@@ -163,6 +295,22 @@ calculateBtn.addEventListener('click', () => {
 
   if (hasError) return;
 
+  // Check for unrealistic speed
+  const previewSpeed = (distance / timeMin) * 60;
+  if (previewSpeed > 25) {
+    const speedWarn = document.getElementById('speed-warning');
+    if (speedWarn) speedWarn.remove();
+    const warn = document.createElement('p');
+    warn.id = 'speed-warning';
+    warn.className = 'speed-warning';
+    warn.textContent = `⚠️ Velocidad de ${previewSpeed.toFixed(1)} km/h — el cálculo solo es fiable hasta ~25 km/h (límite humano en carrera)`;
+    resultsSection.parentNode.insertBefore(warn, resultsSection);
+    setTimeout(() => warn.remove(), 8000);
+  } else {
+    const existing = document.getElementById('speed-warning');
+    if (existing) existing.remove();
+  }
+
   // Auto-save weight
   localStorage.setItem('embr_weight', weight);
 
@@ -176,14 +324,34 @@ calculateBtn.addEventListener('click', () => {
   const paceMin = Math.floor(paceTotal);
   const paceSec = Math.round((paceTotal - paceMin) * 60);
 
+  const activityLabel = getActivityLabel(speedKmh);
+  const roundedCal = Math.round(calories);
+
   // Display results
-  $('#result-calories').textContent = Math.round(calories);
+  $('#result-calories').textContent = roundedCal;
   $('#result-speed').textContent = speedKmh.toFixed(1) + ' km/h';
   $('#result-pace').textContent = paceMin + ':' + String(paceSec).padStart(2, '0') + ' /km';
   $('#result-met').textContent = met.toFixed(1);
-  $('#result-activity').textContent = getActivityLabel(speedKmh);
+  $('#result-activity').textContent = activityLabel;
+
+  // Motivational message
+  $('#motivational-msg').textContent = getMotivationalMessage(roundedCal);
+
+  // Food equivalence
+  $('#result-equivalence').innerHTML = getFoodEquivalence(roundedCal);
 
   resultsSection.classList.remove('hidden');
+
+  // Save to history
+  const now = new Date();
+  saveToHistory({
+    calories: roundedCal,
+    distance: distance.toFixed(2),
+    time: Math.round(timeMin),
+    speed: speedKmh.toFixed(1),
+    activity: activityLabel,
+    date: now.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
+  });
 
   // Animate the number
   animateNumber($('#result-calories'), Math.round(calories));
