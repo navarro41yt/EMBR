@@ -67,6 +67,132 @@ function getDateLocale() {
   return map[i18n.lang] || 'es-ES';
 }
 
+// ── Progress / Level system ──────────────────────────────────
+const LEVEL_THRESHOLDS = [
+  10, 30, 42, 80, 150, 250, 400, 600, 900, 1200,         // 1-10
+  1600, 2100, 2800, 3500, 4500, 5500, 7000, 8500, 10500,  // 11-19
+  13000, 15500, 18000, 20000, 23000, 26000, 29000,         // 20-26
+  32000, 35000, 38000, 40075,                               // 27-30
+  384400,                                                    // 31 (legendary)
+];
+
+function getTotalDistance() {
+  return parseFloat(localStorage.getItem('embr_total_km') || '0');
+}
+
+function addDistance(km) {
+  const prev = getTotalDistance();
+  const next = prev + km;
+  localStorage.setItem('embr_total_km', next.toFixed(2));
+  checkLevelUp(prev, next);
+}
+
+function getCurrentLevel(totalKm) {
+  for (let i = 0; i < LEVEL_THRESHOLDS.length; i++) {
+    if (totalKm < LEVEL_THRESHOLDS[i]) return i; // level index (0 = not yet level 1)
+  }
+  return LEVEL_THRESHOLDS.length; // past legendary
+}
+
+function checkLevelUp(prevKm, newKm) {
+  const prevLevel = getCurrentLevel(prevKm);
+  const newLevel = getCurrentLevel(newKm);
+  if (newLevel > prevLevel && newLevel > 0) {
+    const isLegendary = newLevel === LEVEL_THRESHOLDS.length;
+    const displayLevel = isLegendary
+      ? i18n.t('progress.legendary')
+      : newLevel;
+    showLevelUpToast(displayLevel);
+  }
+}
+
+function showLevelUpToast(level) {
+  const toast = document.getElementById('levelup-toast');
+  const text = document.getElementById('levelup-text');
+  text.textContent = i18n.tf('progress.levelUp', { level });
+  toast.classList.remove('hidden');
+  // Reset animation
+  toast.style.animation = 'none';
+  toast.offsetHeight; // force reflow
+  toast.style.animation = '';
+  setTimeout(() => toast.classList.add('hidden'), 3200);
+}
+
+function renderProgressModal() {
+  const totalKm = getTotalDistance();
+  const levelIdx = getCurrentLevel(totalKm);
+  const isMaxed = levelIdx >= LEVEL_THRESHOLDS.length;
+
+  // Summary
+  document.getElementById('progress-total-km').textContent =
+    totalKm.toFixed(1).replace(/\.0$/, '') + ' km';
+
+  // Badge
+  const badge = document.getElementById('progress-level-badge');
+  if (isMaxed) {
+    badge.textContent = '🌙 ' + i18n.t('progress.legendary');
+    badge.className = 'progress-level-badge legendary';
+  } else if (levelIdx === 0) {
+    badge.textContent = i18n.t('progress.level') + ' 0';
+    badge.className = 'progress-level-badge';
+  } else {
+    const displayLvl = levelIdx >= 31 ? i18n.t('progress.legendary') : levelIdx;
+    badge.textContent = (levelIdx === 31 ? '🌙 ' : '') + i18n.t('progress.level') + ' ' + displayLvl;
+    badge.className = 'progress-level-badge' + (levelIdx >= 31 ? ' legendary' : '');
+  }
+
+  // Progress bar
+  const bar = document.getElementById('progress-bar-fill');
+  const remaining = document.getElementById('progress-remaining');
+  if (isMaxed) {
+    bar.style.width = '100%';
+    bar.className = 'progress-bar-fill legendary';
+    remaining.textContent = i18n.t('progress.maxReached');
+  } else {
+    const prevThreshold = levelIdx > 0 ? LEVEL_THRESHOLDS[levelIdx - 1] : 0;
+    const nextThreshold = LEVEL_THRESHOLDS[levelIdx];
+    const progress = ((totalKm - prevThreshold) / (nextThreshold - prevThreshold)) * 100;
+    bar.style.width = Math.min(100, Math.max(0, progress)).toFixed(1) + '%';
+    bar.className = 'progress-bar-fill' + (levelIdx >= 30 ? ' legendary' : '');
+    const kmLeft = (nextThreshold - totalKm).toFixed(1).replace(/\.0$/, '');
+    remaining.textContent = i18n.tf('progress.remaining', { km: kmLeft });
+  }
+
+  // Level list
+  const levelDescs = i18n.t('progress.levels');
+  const list = document.getElementById('progress-levels');
+  let html = '';
+
+  for (let i = 0; i < LEVEL_THRESHOLDS.length; i++) {
+    const km = LEVEL_THRESHOLDS[i];
+    const isLeg = i === 30;
+    const completed = totalKm >= km;
+    const active = i === levelIdx;
+    const desc = i < levelDescs.length ? levelDescs[i] : (isLeg ? i18n.t('progress.legendaryDesc') : '');
+    const lvlLabel = isLeg ? '🌙' : (i + 1);
+    const kmLabel = km >= 1000 ? (km / 1000).toFixed(km % 1000 === 0 ? 0 : 1) + 'k' : km;
+
+    html += `
+      <div class="progress-level-item ${completed ? 'completed' : ''} ${active ? 'active' : ''}">
+        <div class="plvl-number ${isLeg ? 'legendary' : ''}">${lvlLabel}</div>
+        <div class="plvl-info">
+          <div class="plvl-desc">${desc}</div>
+          <div class="plvl-km">${kmLabel} km${isLeg ? ' — ' + i18n.t('progress.legendary') : ''}</div>
+        </div>
+        ${completed ? '<span class="plvl-check">✓</span>' : ''}
+      </div>
+    `;
+  }
+
+  list.innerHTML = html;
+
+  // Scroll active item into view
+  setTimeout(() => {
+    const activeItem = list.querySelector('.active');
+    if (activeItem) activeItem.scrollIntoView({ block: 'center', behavior: 'smooth' });
+  }, 100);
+}
+
 // ── Theme management ─────────────────────────────────────────
 function getPreferredTheme() {
   const saved = localStorage.getItem('embr_theme');
@@ -143,6 +269,9 @@ const resultsSection = $('#results-section');
 const themeToggle = $('#theme-toggle');
 const clearHistoryBtn = $('#clear-history');
 const langSelect = $('#lang-select');
+const progressOverlay = $('#progress-overlay');
+const openProgressBtn = $('#open-progress');
+const closeProgressBtn = $('#close-progress');
 
 // ── i18n: Initialize & populate selector ─────────────────────
 function populateLangSelector() {
@@ -169,6 +298,26 @@ i18n.onChange(() => {
   if (saved && weightInput.value) {
     weightStatus.textContent = i18n.t('weight.statusLoaded');
     weightStatus.className = 'weight-status info';
+  }
+});
+
+// ── Progress Modal ───────────────────────────────────────────
+openProgressBtn.addEventListener('click', () => {
+  renderProgressModal();
+  progressOverlay.classList.remove('hidden');
+});
+
+closeProgressBtn.addEventListener('click', () => {
+  progressOverlay.classList.add('hidden');
+});
+
+progressOverlay.addEventListener('click', (e) => {
+  if (e.target === progressOverlay) progressOverlay.classList.add('hidden');
+});
+
+document.addEventListener('keydown', (e) => {
+  if (e.key === 'Escape' && !progressOverlay.classList.contains('hidden')) {
+    progressOverlay.classList.add('hidden');
   }
 });
 
@@ -333,6 +482,9 @@ calculateBtn.addEventListener('click', () => {
   $('#result-equivalence').innerHTML = getFoodEquivalence(roundedCal);
 
   resultsSection.classList.remove('hidden');
+
+  // Track distance for progress
+  addDistance(distance);
 
   // Save to history
   const now = new Date();

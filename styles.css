@@ -650,6 +650,291 @@ input[type="number"] {
   background-clip: text;
 }
 
+/* ── Progress Button ─────────────────────────── */
+.btn-progress {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+  line-height: 1;
+}
+
+.btn-progress:hover {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+  transform: scale(1.08);
+}
+
+/* ── Progress Modal Overlay ──────────────────── */
+.progress-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeInOverlay 0.25s ease;
+}
+
+@keyframes fadeInOverlay {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+.progress-modal {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  width: 100%;
+  max-width: 460px;
+  max-height: 85vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: slideUp 0.3s ease;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.3);
+}
+
+.progress-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+}
+
+.progress-modal-header h2 {
+  font-size: 1.1rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-close-progress {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: 1.2rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all var(--transition);
+}
+
+.btn-close-progress:hover {
+  border-color: var(--error);
+  color: var(--error);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+/* ── Progress Summary ────────────────────────── */
+.progress-summary {
+  padding: 24px;
+  text-align: center;
+  border-bottom: 1px solid var(--border);
+}
+
+.progress-total-km {
+  font-size: 2.2rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--accent), #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.2;
+}
+
+.progress-level-badge {
+  display: inline-block;
+  margin-top: 8px;
+  padding: 4px 14px;
+  border-radius: 20px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  background: var(--accent-glow);
+  color: var(--accent);
+  border: 1px solid rgba(249, 115, 22, 0.25);
+}
+
+.progress-level-badge.legendary {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.15), rgba(236, 72, 153, 0.15));
+  color: #c084fc;
+  border-color: rgba(168, 85, 247, 0.3);
+  animation: legendaryGlow 2s ease-in-out infinite alternate;
+}
+
+@keyframes legendaryGlow {
+  from { box-shadow: 0 0 8px rgba(168, 85, 247, 0.2); }
+  to   { box-shadow: 0 0 16px rgba(168, 85, 247, 0.4); }
+}
+
+.progress-bar-container {
+  margin-top: 16px;
+  height: 10px;
+  background: var(--bg);
+  border-radius: 5px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+}
+
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent), #fbbf24);
+  border-radius: 5px;
+  transition: width 0.6s cubic-bezier(0.22, 1, 0.36, 1);
+  min-width: 0;
+}
+
+.progress-bar-fill.legendary {
+  background: linear-gradient(90deg, #a855f7, #ec4899, #a855f7);
+  background-size: 200% 100%;
+  animation: legendaryBar 2s linear infinite;
+}
+
+@keyframes legendaryBar {
+  0%   { background-position: 0% 0%; }
+  100% { background-position: 200% 0%; }
+}
+
+.progress-remaining {
+  margin-top: 10px;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+/* ── Progress Level List ─────────────────────── */
+.progress-levels {
+  padding: 12px;
+  overflow-y: auto;
+  flex: 1;
+}
+
+.progress-level-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: var(--radius-sm);
+  transition: background var(--transition);
+}
+
+.progress-level-item:hover {
+  background: var(--surface-hover);
+}
+
+.progress-level-item.active {
+  background: var(--accent-glow);
+  border: 1px solid rgba(249, 115, 22, 0.2);
+}
+
+.progress-level-item.completed .plvl-number {
+  background: var(--success);
+  color: white;
+}
+
+.plvl-number {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.plvl-number.legendary {
+  background: linear-gradient(135deg, #a855f7, #ec4899);
+  color: white;
+  border: none;
+  font-size: 0.9rem;
+}
+
+.plvl-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.plvl-desc {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.plvl-km {
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.plvl-check {
+  color: var(--success);
+  font-size: 0.9rem;
+  flex-shrink: 0;
+}
+
+/* ── Level-up Toast ──────────────────────────── */
+.levelup-toast {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 2000;
+  background: var(--surface);
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  padding: 14px 24px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 8px 32px rgba(249, 115, 22, 0.25);
+  animation: toastIn 0.4s ease, toastOut 0.4s ease 2.6s forwards;
+}
+
+.levelup-icon {
+  font-size: 1.5rem;
+}
+
+.levelup-text {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+@keyframes toastIn {
+  from { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+@keyframes toastOut {
+  from { opacity: 1; transform: translateX(-50%) translateY(0); }
+  to   { opacity: 0; transform: translateX(-50%) translateY(-20px); }
+}
+
 /* ── Responsive ───────────────────────────────── */
 @media (max-width: 480px) {
   .app {
