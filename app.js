@@ -1,32 +1,18 @@
 // ── MET reference points (speed in km/h → MET) ──────────────
 const MET_TABLE = [
-  { speed: 3.0, met: 2.5 },   // Paseo lento
-  { speed: 4.0, met: 3.0 },   // Paseo normal
-  { speed: 5.0, met: 3.5 },   // Caminar ligero
-  { speed: 6.0, met: 4.3 },   // Caminar moderado
-  { speed: 6.5, met: 5.0 },   // Caminar rápido
-  { speed: 7.5, met: 6.5 },   // Marcha rápida / trote suave
-  { speed: 8.0, met: 8.0 },   // Trote
-  { speed: 9.5, met: 9.5 },   // Correr moderado
-  { speed: 10.0, met: 10.0 }, // Correr
-  { speed: 12.0, met: 12.5 }, // Correr rápido
-  { speed: 14.0, met: 15.0 }, // Sprint moderado
-  { speed: 16.0, met: 17.0 }, // Sprint
+  { speed: 3.0, met: 2.5 },
+  { speed: 4.0, met: 3.0 },
+  { speed: 5.0, met: 3.5 },
+  { speed: 6.0, met: 4.3 },
+  { speed: 6.5, met: 5.0 },
+  { speed: 7.5, met: 6.5 },
+  { speed: 8.0, met: 8.0 },
+  { speed: 9.5, met: 9.5 },
+  { speed: 10.0, met: 10.0 },
+  { speed: 12.0, met: 12.5 },
+  { speed: 14.0, met: 15.0 },
+  { speed: 16.0, met: 17.0 },
 ];
-
-// ── Activity labels based on speed ───────────────────────────
-function getActivityLabel(speed) {
-  if (speed < 3.5) return 'Paseo lento';
-  if (speed < 4.5) return 'Paseo';
-  if (speed < 5.5) return 'Caminar ligero';
-  if (speed < 6.3) return 'Caminar moderado';
-  if (speed < 7.0) return 'Caminar rápido';
-  if (speed < 8.0) return 'Marcha / trote suave';
-  if (speed < 9.0) return 'Trote';
-  if (speed < 10.5) return 'Correr';
-  if (speed < 13.0) return 'Correr rápido';
-  return 'Sprint';
-}
 
 // ── Interpolate MET from speed ───────────────────────────────
 function calculateMET(speedKmh) {
@@ -44,33 +30,15 @@ function calculateMET(speedKmh) {
   return MET_TABLE[MET_TABLE.length - 1].met;
 }
 
-// ── Motivational messages ────────────────────────────────────
-const MOTIVATIONAL_MESSAGES = {
-  low: [  // < 100 kcal
-    '¡Todo paso cuenta! Sigue moviéndote 💪',
-    '¡Buen comienzo! La constancia es la clave 🔑',
-    '¡Cada kilómetro te hace más fuerte! 🚶',
-    'Los pequeños esfuerzos crean grandes cambios ✨',
-  ],
-  medium: [  // 100–300 kcal
-    '¡Gran trabajo! Estás en racha 🔥',
-    '¡Eso es dedicación! Sigue así 💥',
-    '¡Tu cuerpo te lo agradece! 🏆',
-    '¡Impresionante esfuerzo! No pares 🚀',
-  ],
-  high: [  // 300–600 kcal
-    '¡Máquina! Eso ha sido brutal 🏅',
-    '¡Estás en otro nivel! Tremendo 💎',
-    '¡Sesión épica! Eres imparable 🦾',
-    '¡Atleta nato! Qué monstruo 🐺',
-  ],
-  extreme: [  // > 600 kcal
-    '¡BESTIA ABSOLUTA! Has destruido esa sesión 🔥🔥🔥',
-    '¡Nivel dios! ¿Quién te para? ⚡',
-    '¡Eso no es humano! Eres una leyenda 👑',
-    '¡Infernal! Has quemado hasta el asfalto 🌋',
-  ],
-};
+// ── i18n-powered helpers ─────────────────────────────────────
+function getActivityLabel(speed) {
+  const labels = i18n.t('activityLabels');
+  if (!Array.isArray(labels)) return '';
+  for (const entry of labels) {
+    if (speed < entry.maxSpeed) return entry.label;
+  }
+  return labels[labels.length - 1].label;
+}
 
 function getMotivationalMessage(calories) {
   let tier;
@@ -78,28 +46,25 @@ function getMotivationalMessage(calories) {
   else if (calories < 300) tier = 'medium';
   else if (calories < 600) tier = 'high';
   else tier = 'extreme';
-  const msgs = MOTIVATIONAL_MESSAGES[tier];
+  const msgs = i18n.t(`motivational.${tier}`);
+  if (!Array.isArray(msgs)) return '';
   return msgs[Math.floor(Math.random() * msgs.length)];
 }
 
-// ── Food equivalences (kcal per unit) ────────────────────────
-const FOOD_EQUIVALENCES = [
-  { emoji: '🍕', name: 'porciones de pizza', kcal: 270 },
-  { emoji: '🍫', name: 'barritas de chocolate', kcal: 230 },
-  { emoji: '🍩', name: 'donuts', kcal: 250 },
-  { emoji: '🍌', name: 'plátanos', kcal: 105 },
-  { emoji: '🥤', name: 'latas de Coca-Cola', kcal: 140 },
-  { emoji: '🍺', name: 'cervezas', kcal: 150 },
-  { emoji: '🍪', name: 'galletas', kcal: 75 },
-  { emoji: '🥑', name: 'aguacates', kcal: 240 },
-  { emoji: '🌮', name: 'tacos', kcal: 210 },
-  { emoji: '🍦', name: 'bolas de helado', kcal: 200 },
-];
-
 function getFoodEquivalence(calories) {
-  const food = FOOD_EQUIVALENCES[Math.floor(Math.random() * FOOD_EQUIVALENCES.length)];
+  const items = i18n.t('food.items');
+  const template = i18n.t('food.template');
+  if (!Array.isArray(items)) return '';
+  const food = items[Math.floor(Math.random() * items.length)];
   const amount = (calories / food.kcal).toFixed(1);
-  return `<span class="eq-emoji">${food.emoji}</span> Equivale a <span class="eq-value">${amount}</span> ${food.name}`;
+  const text = template.replace('{amount}', amount).replace('{name}', food.name);
+  return `<span class="eq-emoji">${food.emoji}</span> ${text}`;
+}
+
+// ── Locale helper for dates ──────────────────────────────────
+function getDateLocale() {
+  const map = { es: 'es-ES', en: 'en-GB', pt: 'pt-BR', ja: 'ja-JP' };
+  return map[i18n.lang] || 'es-ES';
 }
 
 // ── Theme management ─────────────────────────────────────────
@@ -149,8 +114,8 @@ function renderHistory() {
   }
 
   section.classList.remove('hidden');
-  list.innerHTML = history.map((h, i) => `
-    <div class="history-item" style="animation-delay: ${i * 0.05}s">
+  list.innerHTML = history.map((h, idx) => `
+    <div class="history-item" style="animation-delay: ${idx * 0.05}s">
       <div class="history-item-left">
         <span class="history-item-cal">${h.calories} kcal</span>
         <span class="history-item-info">${h.distance} km · ${h.time} min · ${h.speed} km/h · ${h.activity}</span>
@@ -175,21 +140,48 @@ const btnMinutes = $('#btn-minutes');
 const btnHhmm = $('#btn-hhmm');
 const calculateBtn = $('#calculate');
 const resultsSection = $('#results-section');
-
 const themeToggle = $('#theme-toggle');
-const historySection = $('#history-section');
 const clearHistoryBtn = $('#clear-history');
+const langSelect = $('#lang-select');
 
-// ── Theme Toggle ──────────────────────────────────────────────
+// ── i18n: Initialize & populate selector ─────────────────────
+function populateLangSelector() {
+  const langs = i18n.getLanguages();
+  langSelect.innerHTML = langs.map((l) =>
+    `<option value="${l.code}" ${l.code === i18n.lang ? 'selected' : ''}>${l.flag} ${l.name}</option>`
+  ).join('');
+}
+
+populateLangSelector();
+i18n.init();
+
+langSelect.addEventListener('change', (e) => {
+  i18n.setLanguage(e.target.value);
+});
+
+// Update selector value when i18n.init() resolves the actual language
+langSelect.value = i18n.lang;
+
+// Re-apply dynamic text when language changes
+i18n.onChange(() => {
+  langSelect.value = i18n.lang;
+  const saved = localStorage.getItem('embr_weight');
+  if (saved && weightInput.value) {
+    weightStatus.textContent = i18n.t('weight.statusLoaded');
+    weightStatus.className = 'weight-status info';
+  }
+});
+
+// ── Theme Toggle ─────────────────────────────────────────────
 themeToggle.addEventListener('click', () => {
   const current = document.documentElement.getAttribute('data-theme');
   applyTheme(current === 'light' ? 'dark' : 'light');
 });
 
-// ── History: Clear ────────────────────────────────────────────
+// ── History: Clear ───────────────────────────────────────────
 clearHistoryBtn.addEventListener('click', clearHistory);
 
-// ── History: Initial render ───────────────────────────────────
+// ── History: Initial render ──────────────────────────────────
 renderHistory();
 
 // ── Time Mode Toggle ─────────────────────────────────────────
@@ -214,7 +206,6 @@ btnHhmm.addEventListener('click', () => {
 // ── HH:MM Input Formatting ──────────────────────────────────
 timeHhmmInput.addEventListener('input', (e) => {
   let val = e.target.value.replace(/[^0-9:]/g, '');
-  // Auto-insert colon after hours digits
   if (val.length === 2 && !val.includes(':') && e.inputType !== 'deleteContentBackward') {
     val += ':';
   }
@@ -240,7 +231,7 @@ function loadWeight() {
   const saved = localStorage.getItem('embr_weight');
   if (saved) {
     weightInput.value = saved;
-    weightStatus.textContent = 'Peso guardado anteriormente';
+    weightStatus.textContent = i18n.t('weight.statusLoaded');
     weightStatus.className = 'weight-status info';
   }
 }
@@ -252,14 +243,14 @@ saveWeightBtn.addEventListener('click', () => {
   const w = parseFloat(weightInput.value);
   if (!w || w < 20 || w > 300) {
     flashError(weightInput);
-    weightStatus.textContent = 'Introduce un peso válido (20-300 kg)';
+    weightStatus.textContent = i18n.t('weight.statusError');
     weightStatus.className = 'weight-status';
     weightStatus.style.color = 'var(--error)';
     return;
   }
   localStorage.setItem('embr_weight', w);
   saveWeightBtn.classList.add('saved');
-  weightStatus.textContent = 'Peso guardado correctamente';
+  weightStatus.textContent = i18n.t('weight.statusSaved');
   weightStatus.className = 'weight-status saved';
   setTimeout(() => saveWeightBtn.classList.remove('saved'), 1500);
 });
@@ -303,7 +294,7 @@ calculateBtn.addEventListener('click', () => {
     const warn = document.createElement('p');
     warn.id = 'speed-warning';
     warn.className = 'speed-warning';
-    warn.textContent = `⚠️ Velocidad de ${previewSpeed.toFixed(1)} km/h — el cálculo solo es fiable hasta ~25 km/h (límite humano en carrera)`;
+    warn.textContent = i18n.tf('warnings.speed', { speed: previewSpeed.toFixed(1) });
     resultsSection.parentNode.insertBefore(warn, resultsSection);
     setTimeout(() => warn.remove(), 8000);
   } else {
@@ -326,11 +317,12 @@ calculateBtn.addEventListener('click', () => {
 
   const activityLabel = getActivityLabel(speedKmh);
   const roundedCal = Math.round(calories);
+  const paceUnit = i18n.t('results.paceUnit');
 
   // Display results
   $('#result-calories').textContent = roundedCal;
   $('#result-speed').textContent = speedKmh.toFixed(1) + ' km/h';
-  $('#result-pace').textContent = paceMin + ':' + String(paceSec).padStart(2, '0') + ' /km';
+  $('#result-pace').textContent = paceMin + ':' + String(paceSec).padStart(2, '0') + ' ' + paceUnit;
   $('#result-met').textContent = met.toFixed(1);
   $('#result-activity').textContent = activityLabel;
 
@@ -350,11 +342,11 @@ calculateBtn.addEventListener('click', () => {
     time: Math.round(timeMin),
     speed: speedKmh.toFixed(1),
     activity: activityLabel,
-    date: now.toLocaleDateString('es-ES', { day: 'numeric', month: 'short' }),
+    date: now.toLocaleDateString(getDateLocale(), { day: 'numeric', month: 'short' }),
   });
 
   // Animate the number
-  animateNumber($('#result-calories'), Math.round(calories));
+  animateNumber($('#result-calories'), roundedCal);
 
   // Scroll to results
   setTimeout(() => {
@@ -370,7 +362,6 @@ function animateNumber(el, target) {
   function tick(now) {
     const elapsed = now - start;
     const progress = Math.min(elapsed / duration, 1);
-    // Ease out cubic
     const eased = 1 - Math.pow(1 - progress, 3);
     el.textContent = Math.round(eased * target);
 

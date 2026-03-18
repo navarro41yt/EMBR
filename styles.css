@@ -90,8 +90,6 @@ body {
 
 /* ── Theme Toggle ────────────────────────────── */
 .btn-theme {
-  position: absolute;
-  right: 0;
   width: 40px;
   height: 40px;
   border-radius: 50%;
@@ -116,6 +114,46 @@ body {
 
 [data-theme="light"] .icon-moon { display: block; }
 [data-theme="light"] .icon-sun  { display: none; }
+
+.header-controls {
+  position: absolute;
+  right: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* ── Language Selector ───────────────────────── */
+.lang-select {
+  height: 40px;
+  padding: 0 10px;
+  border-radius: 20px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 0.8rem;
+  font-family: inherit;
+  cursor: pointer;
+  outline: none;
+  transition: all var(--transition);
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+}
+
+.lang-select:hover {
+  border-color: var(--accent);
+}
+
+.lang-select:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-glow);
+}
+
+.lang-select option {
+  background: var(--surface);
+  color: var(--text);
+}
 
 .logo-icon {
   font-size: 2rem;
