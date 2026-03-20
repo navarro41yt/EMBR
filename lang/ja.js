@@ -24,6 +24,7 @@ i18n.register('ja', {
     hhmm: 'HH:MM',
     hhmmSuffix: '時:分',
     calculate: 'カロリーを計算',
+    simulateMode: 'シミュレーションのみ（進捗に含めない）',
   },
 
   results: {

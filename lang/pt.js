@@ -24,6 +24,7 @@ i18n.register('pt', {
     hhmm: 'HH:MM',
     hhmmSuffix: 'h:min',
     calculate: 'Calcular calorias',
+    simulateMode: 'Apenas simular (não conta no progresso)',
   },
 
   results: {

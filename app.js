@@ -483,19 +483,23 @@ calculateBtn.addEventListener('click', () => {
 
   resultsSection.classList.remove('hidden');
 
-  // Track distance for progress
-  addDistance(distance);
+  const isSimulate = document.getElementById('simulate-mode').checked;
 
-  // Save to history
-  const now = new Date();
-  saveToHistory({
-    calories: roundedCal,
-    distance: distance.toFixed(2),
-    time: Math.round(timeMin),
-    speed: speedKmh.toFixed(1),
-    activity: activityLabel,
-    date: now.toLocaleDateString(getDateLocale(), { day: 'numeric', month: 'short' }),
-  });
+  if (!isSimulate) {
+    // Track distance for progress
+    addDistance(distance);
+
+    // Save to history
+    const now = new Date();
+    saveToHistory({
+      calories: roundedCal,
+      distance: distance.toFixed(2),
+      time: Math.round(timeMin),
+      speed: speedKmh.toFixed(1),
+      activity: activityLabel,
+      date: now.toLocaleDateString(getDateLocale(), { day: 'numeric', month: 'short' }),
+    });
+  }
 
   // Animate the number
   animateNumber($('#result-calories'), roundedCal);
